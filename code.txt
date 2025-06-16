@@ -1,0 +1,704 @@
+#发文量分析：
+library(ggplot2)
+library(dplyr)
+library(forcats)  # 用于因子水平操作
+
+# 创建包含完整数据的数据框
+data <- data.frame(
+  Country = c("USA", "CHINA", "FRANCE", "England",  # 注意：图表显示为"England"
+              "ITALY", "GERMANY", "SPAIN", "AUSTRALIA", 
+              "JAPAN", "CANADA"),
+  Articles = c(896, 396, 163, 140, 134, 124, 121, 104, 101, 93),
+  SCP = c(663, 303, 96, 84, 76, 63, 72, 60, 73, 66),
+  MCP = c(233, 93, 67, 56, 58, 61, 49, 44, 28, 27),
+  # 基于提供的百分比数据
+  MCP_pct = c(26.0, 23.5, 41.1, 40.0, 43.3, 49.2, 40.5, 42.3, 27.7, 29.0)
+)
+
+# 计算Articles百分比（按10个国家总和计算）
+total_articles <- sum(data$Articles)
+data$Articles_pct <- round(data$Articles / total_articles * 100, 1)
+
+# 将数据转换为长格式用于堆叠条形图
+data_long <- data %>%
+  tidyr::pivot_longer(
+    cols = c(SCP, MCP),
+    names_to = "Publication_Type",
+    values_to = "Count"
+  ) %>%
+  mutate(
+    Publication_Type = factor(
+      Publication_Type,
+      levels = c("MCP", "SCP"),
+      labels = c("Multiple Country Publications", "Single Country Publications")
+    ),
+    Country = fct_reorder(Country, Articles)  # 按Articles降序排序
+  )
+
+# 创建图表
+ggplot(data_long, aes(x = Count, y = Country, fill = Publication_Type)) +
+  geom_col(position = "stack", width = 0.7, alpha = 0.9) +
+  # 添加MCP百分比标签（柱子内部）
+  geom_text(
+    data = data,
+    aes(x = SCP + MCP/2,  # 位于MCP区域中心
+        label = ifelse(MCP > 0, sprintf("%.1f%%", MCP_pct), ""),
+        fill = NULL),
+    color = "white",
+    size = 3.5,
+    fontface = "bold"
+  ) +
+  # 添加文章总数标签（右侧）
+  geom_text(
+    data = data,
+    aes(x = Articles + max(Articles)*0.04,  # 在柱子右侧留出空间
+        y = Country,
+        label = sprintf("%d (%.1f%%)", Articles, Articles_pct),
+        fill = NULL),
+    hjust = 0, 
+    color = "black",
+    size = 3.5
+  ) +
+  # 设置颜色方案（匹配原图）
+  scale_fill_manual(
+    name = "Type",
+    values = c("Multiple Country Publications" = "#33a02c",
+               "Single Country Publications" = "#e31a1c")
+  ) +
+  # 设置坐标轴和标题
+  labs(
+    title = "Corresponding Author's Countries",
+    x = "N. Of Documents",
+    y = "Countries"
+  ) +
+  # 设置横坐标范围（匹配原图0-750）
+  scale_x_continuous(
+    breaks = seq(0, 750, by = 250),
+    limits = c(0, 750 * 1.2),  # 为右侧标签留空间
+    expand = c(0, 0)
+  ) +
+  # 主题设置
+  theme_minimal(base_size = 12) +
+  theme(
+    plot.title = element_text(
+      hjust = 0.5, 
+      face = "bold", 
+      size = 16,
+      margin = margin(b = 15)
+    ),
+    axis.title.x = element_text(
+      size = 12,
+      margin = margin(t = 10)
+    ),
+    axis.title.y = element_text(
+      size = 12,
+      margin = margin(r = 10)
+    ),
+    panel.grid.major.y = element_blank(),
+    panel.grid.minor.x = element_blank(),
+    legend.position = c(0.85, 0.15),  # 右下角位置
+    legend.title = element_blank(),
+    legend.text = element_text(size = 10),
+    legend.background = element_rect(fill = "white", color = "grey")
+  )
+
+#国家发文量分析：
+library(ggplot2)
+library(dplyr)
+library(forcats)  # 用于因子水平操作
+# 创建包含完整数据的数据框
+data <- data.frame(
+  Country = c("USA", "CHINA", "FRANCE", "England",  # 注意：图表显示为"England"
+              "ITALY", "GERMANY", "SPAIN", "AUSTRALIA", 
+              "JAPAN", "CANADA"),
+  Articles = c(896, 396, 163, 140, 134, 124, 121, 104, 101, 93),
+  SCP = c(663, 303, 96, 84, 76, 63, 72, 60, 73, 66),
+  MCP = c(233, 93, 67, 56, 58, 61, 49, 44, 28, 27),
+  # 基于提供的百分比数据
+  MCP_pct = c(26.0, 23.5, 41.1, 40.0, 43.3, 49.2, 40.5, 42.3, 27.7, 29.0)
+)
+
+# 计算Articles百分比（按10个国家总和计算）
+total_articles <- sum(data$Articles)
+data$Articles_pct <- round(data$Articles / total_articles * 100, 1)
+# 将数据转换为长格式用于堆叠条形图
+data_long <- data %>%
+  tidyr::pivot_longer(
+    cols = c(SCP, MCP),
+    names_to = "Publication_Type",
+    values_to = "Count"
+  ) %>%
+  mutate(
+    Publication_Type = factor(
+      Publication_Type,
+      levels = c("MCP", "SCP"),
+      labels = c("Multiple Country Publications", "Single Country Publications")
+    ),
+    Country = fct_reorder(Country, Articles)  # 按Articles降序排序
+  )
+# 创建图表
+ggplot(data_long, aes(x = Count, y = Country, fill = Publication_Type)) +
+  geom_col(position = "stack", width = 0.7, alpha = 0.9) +
+  # 添加MCP百分比标签（柱子内部）
+  geom_text(
+    data = data,
+    aes(x = SCP + MCP/2,  # 位于MCP区域中心
+        label = ifelse(MCP > 0, sprintf("%.1f%%", MCP_pct), ""),
+        fill = NULL),
+    color = "white",
+    size = 3.5,
+    fontface = "bold"
+  ) +
+  # 添加文章总数标签（右侧）
+  geom_text(
+    data = data,
+    aes(x = Articles + max(Articles)*0.04,  # 在柱子右侧留出空间
+        y = Country,
+        label = sprintf("%d (%.1f%%)", Articles, Articles_pct),
+        fill = NULL),
+    hjust = 0, 
+    color = "black",
+    size = 3.5
+  ) +
+  # 设置颜色方案（匹配原图）
+  scale_fill_manual(
+    name = "Type",
+    values = c("Multiple Country Publications" = "#33a02c",
+               "Single Country Publications" = "#e31a1c")
+  ) +
+  # 设置坐标轴和标题
+  labs(
+    title = "Corresponding Author's Countries",
+    x = "N. Of Documents",
+    y = "Countries"
+  ) +
+  # 设置横坐标范围（匹配原图0-750）
+  scale_x_continuous(
+    breaks = seq(0, 750, by = 250),
+    limits = c(0, 750 * 1.2),  # 为右侧标签留空间
+    expand = c(0, 0)
+  ) +
+  # 主题设置
+  theme_minimal(base_size = 12) +
+  theme(
+    plot.title = element_text(
+      hjust = 0.5, 
+      face = "bold", 
+      size = 16,
+      margin = margin(b = 15)
+    ),
+    axis.title.x = element_text(
+      size = 12,
+      margin = margin(t = 10)
+    ),
+    axis.title.y = element_text(
+      size = 12,
+      margin = margin(r = 10)
+    ),
+    panel.grid.major.y = element_blank(),
+    panel.grid.minor.x = element_blank(),
+    legend.position = c(0.85, 0.15),  # 右下角位置
+    legend.title = element_blank(),
+    legend.text = element_text(size = 10),
+    legend.background = element_rect(fill = "white", color = "grey")
+
+#期刊合作分析：
+library(bibliometrix)
+library(dplyr)
+
+# 1. 直接导入数据
+file_path <- "F:/Desktop/张一迪文章/肠道病毒/plain/all/all.txt"
+
+# 确保文件存在
+if (file.exists(file_path)) {
+  # 使用tryCatch捕获可能的导入错误
+  WOS_data <- tryCatch(
+    {
+      convert2df(file_path, dbsource = "wos", format = "plaintext")
+    },
+    error = function(e) {
+      message("导入错误: ", e$message)
+      return(NULL)
+    }
+  )
+} else {
+  stop("文件不存在! 请检查路径: ", file_path)
+}
+
+# 2. 清洗数据（如果导入成功）
+if (!is.null(WOS_data)) {
+  clean_WOS <- function(df) {
+    df <- df %>% 
+      mutate(
+        AU = gsub(";\\s+", ";", AU),  # 作者分隔符标准化
+        PY = as.integer(PY)           # 年份转换
+      ) %>% 
+      filter(!is.na(PY) & PY >= 1990)  # 过滤无效年份
+    
+    # 摘要处理（不转换编码，仅压缩空格）
+    df$AB <- gsub("\\s{2,}", " ", df$AB)
+    
+    return(df)
+  }
+  
+  WOS_clean <- clean_WOS(WOS_data)
+  
+  # 查看结果
+  cat("成功导入并清洗", nrow(WOS_clean), "条记录\n")
+  print(head(WOS_clean[, c("AU", "PY", "TI")]))
+} else {
+  message("数据导入失败，无法进行清洗")
+}
+################
+
+####期刊
+# 确保dplyr和ggplot2已加载
+library(dplyr)
+library(ggplot2)
+
+# 1. 获取前10名期刊的发文量排名
+# 创建top_journals对象（如果不存在）
+if (!exists("top_journals")) {
+  # 统计各期刊发文量
+  journal_counts <- WOS_clean %>%
+    group_by(SO) %>%
+    summarise(Articles = n(), .groups = "drop") %>%
+    arrange(desc(Articles))
+  
+  # 选择发文量最多的前10名期刊
+  top_journals <- head(journal_counts, 10)
+  
+  # 打印结果
+  cat("Top 10 Journals by Publication Volume:\n")
+  print(top_journals)
+  
+  # 将对象保存到全局环境
+  assign("top_journals", top_journals, envir = .GlobalEnv)
+}
+
+# 2. 创建时间趋势数据
+trend_data <- WOS_clean %>%
+  # 过滤出前10名期刊
+  filter(SO %in% top_journals$SO) %>%
+  # 按期刊和年份分组统计
+  group_by(SO, PY) %>%
+  summarise(Count = n(), .groups = "drop") 
+# 8. 热力图可视化
+ggplot(trend_data, aes(x = PY, y = SO, fill = Count)) +
+  geom_tile(color = "white") +
+  scale_fill_gradient(low = "#f7fbff", high = "#08519c", name = "Publications") +
+  labs(title = "Heatmap of Publication Trends in Top Journals",
+       x = "Year", y = "Journal") +
+  theme_minimal() +
+  theme(panel.grid = element_blank(),
+        axis.text.y = element_text(size = 10, hjust = 1),
+        plot.title = element_text(face = "bold", size = 14))
+
+# 保存热力图
+ggsave("top_journals_heatmap.png", width = 12, height = 8, dpi = 300)
+作者发文分析：
+
+library(bibliometrix)
+library(dplyr)
+
+# 1. 直接导入数据
+file_path <- "F:/Desktop/张一迪文章/肠道病毒/plain/all/all.txt"
+
+# 确保文件存在
+if (file.exists(file_path)) {
+  # 使用tryCatch捕获可能的导入错误
+  WOS_data <- tryCatch(
+    {
+      convert2df(file_path, dbsource = "wos", format = "plaintext")
+    },
+    error = function(e) {
+      message("导入错误: ", e$message)
+      return(NULL)
+    }
+  )
+} else {
+  stop("文件不存在! 请检查路径: ", file_path)
+}
+
+# 2. 清洗数据（如果导入成功）
+if (!is.null(WOS_data)) {
+  clean_WOS <- function(df) {
+    df <- df %>% 
+      mutate(
+        AU = gsub(";\\s+", ";", AU),  # 作者分隔符标准化
+        PY = as.integer(PY)           # 年份转换
+      ) %>% 
+      filter(!is.na(PY) & PY >= 1990)  # 过滤无效年份
+    
+    # 摘要处理（不转换编码，仅压缩空格）
+    df$AB <- gsub("\\s{2,}", " ", df$AB)
+    
+    return(df)
+  }
+  
+  WOS_clean <- clean_WOS(WOS_data)
+  
+  # 查看结果
+  cat("成功导入并清洗", nrow(WOS_clean), "条记录\n")
+  print(head(WOS_clean[, c("AU", "PY", "TI")]))
+} else {
+  message("数据导入失败，无法进行清洗")
+}
+#####已经清洗成功###作者主题演变
+library(bibliometrix)
+library(tidyverse)
+library(tidytext)
+library(widyr)
+library(ggraph)
+library(igraph)
+library(dplyr)
+
+# 假设已经清洗好的数据为 WOS_clean
+# 筛选2000-2024年的数据
+WOS_analysis <- WOS_clean %>%
+  filter(PY >= 2000, PY <= 2024) %>%
+  # 确保作者字段格式统一
+  mutate(AU = str_replace_all(AU, ";\\s*", ";")) %>%
+  # 分割多个作者到单独行
+  mutate(AU_list = str_split(AU, ";")) %>%
+  unnest(AU_list) %>%
+  mutate(AU_clean = str_trim(AU_list)) %>%
+  select(-AU_list)
+
+# 提取高产作者（根据发文量）
+author_counts <- count(WOS_analysis, AU_clean, sort = TRUE)
+top_authors <- head(author_counts$AU_clean, 10)  # 选取前10位高产作者
+
+###############
+
+library(tidyverse)
+library(tidytext)
+library(widyr)
+library(ggraph)
+library(igraph)
+library(RColorBrewer)
+library(tm)
+
+# 1. 关键词处理（确保使用完整的数据）
+keywords_df <- WOS_analysis %>%
+  # 合并关键词字段（优先使用DE，没有则用ID）
+  mutate(
+    keywords = coalesce(DE, ID),
+    keywords = ifelse(is.na(keywords) | keywords == "", "no_keywords", tolower(keywords))
+  ) %>%
+  # 分割关键词
+  separate_rows(keywords, sep = ";") %>%
+  mutate(keyword = str_trim(keywords)) %>%
+  select(-keywords) %>%
+  filter(
+    !is.na(keyword),
+    keyword != "",
+    keyword != "no_keywords",
+    keyword != "na",
+    keyword != "n/a"
+  ) %>%
+  # 合并同义词
+  mutate(keyword = case_when(
+    str_detect(keyword, "ev71|enterovirus 71") ~ "enterovirus a71",
+    str_detect(keyword, "hand,? foot and mouth disease|hfmd") ~ "hand-foot-mouth disease",
+    str_detect(keyword, "polio|poliomyelitis") ~ "poliomyelitis",
+    str_detect(keyword, "coxsackie") ~ "coxsackievirus",
+    str_detect(keyword, "aseptic meningitis") ~ "viral meningitis",
+    TRUE ~ keyword
+  )) %>%
+  # 只保留高产作者
+  filter(AU_clean %in% top_authors)
+
+# 2. 创建时间段变量（8年一个区间）
+keywords_df <- keywords_df %>%
+  mutate(period = cut(
+    PY,
+    breaks = seq(2000, 2025, by = 8),
+    labels = c("2000-2008", "2009-2018", "2019-2024"),
+    include.lowest = TRUE
+  )) %>%
+  filter(!is.na(period))
+
+# 3. 计算每个作者在每个时间段的关键词TF-IDF
+author_period_tfidf <- keywords_df %>%
+  # 创建作者-时间段组合作为文档
+  unite(author_period, AU_clean, period, sep = "-", remove = FALSE) %>%
+  count(author_period, keyword, name = "n") %>%
+  bind_tf_idf(keyword, author_period, n) %>%
+  separate(author_period, into = c("author", "period"), sep = "-")
+
+# 4. 提取每个作者在每个时间段的前3个主题
+top_topics <- author_period_tfidf %>%
+  group_by(author, period) %>%
+  slice_max(tf_idf, n = 3, with_ties = FALSE) %>%
+  ungroup()
+
+# 5. 可视化1: 作者主题热力图
+ggplot(top_topics, aes(x = period, y = reorder(keyword, tf_idf, sum))) +
+  geom_tile(aes(fill = tf_idf), color = "white") +
+  scale_fill_gradient(low = "white", high = "red") +
+  labs(x = "时间段", y = "关键词", fill = "TF-IDF值",
+       title = "前10位高产作者的研究主题演变") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+##########################
+
+# 7. 可视化3: 作者研究主题演化路径
+author_keywords <- keywords_df %>%
+  filter(AU_clean %in% top_authors[1:10]) %>%  # 取前10位作者避免过于拥挤
+  group_by(AU_clean, period) %>%
+  summarise(top_keywords = paste(
+    head(unique(keyword), 3),  # 每个时期取前3个关键词
+    collapse = ", "
+  ), .groups = "drop")
+
+# 使用分面展示作者演化
+# 修改后的代码
+ggplot(author_keywords, aes(x = period, y = AU_clean)) +
+  geom_point(size = 4, color = "blue") +
+  geom_path(aes(group = AU_clean), size = 1, color = "grey50") +
+  geom_text(
+    aes(label = top_keywords), 
+    size = 3, 
+    hjust = 0,
+    position = position_nudge(x = 0.1)  # 使用position_nudge代替nudge_x
+  ) +
+  labs(
+    x = "时间段", 
+    y = "作者", 
+    title = "前10位高产作者的研究主题演变路径"
+  ) +
+  theme_minimal() +
+  theme(
+    panel.grid.major.x = element_blank(),
+    axis.text.x = element_text(angle = 45, hjust = 1)
+  )
+###############
+##美化
+library(ggrepel)
+
+# 修改数据准备部分：每个时期每个作者取2个关键词
+author_keywords <- keywords_df %>%
+  filter(AU_clean %in% top_authors[1:10]) %>%
+  group_by(AU_clean, period) %>%
+  summarise(
+    top_keywords = paste(
+      head(unique(keyword), 2),  # 关键修改：每个时期取前2个关键词
+      collapse = ", "
+    ), 
+    .groups = "drop"
+  )
+
+ggplot(author_keywords, aes(x = period, y = AU_clean)) +
+  # 设置作者顺序（按发文量高到低）
+  scale_y_discrete(limits = top_authors[1:10]) +
+  
+  # 1. 路径线条
+  geom_path(
+    aes(group = AU_clean, color = "Author Path"), 
+    size = 1.2,
+    linetype = "solid",
+    alpha = 0.7,
+    show.legend = TRUE
+  ) +
+  
+  # 2. 时间点标记
+  geom_point(
+    aes(fill = period, color = "Time Node"), 
+    size = 6,
+    shape = 21,
+    stroke = 1.2,
+    show.legend = TRUE
+  ) +
+  
+  # 3. 关键词标签（展示2个关键词）
+  geom_label_repel(
+    aes(label = top_keywords),
+    size = 3.2,
+    fill = alpha("white", 0.8),
+    color = "black",
+    box.padding = 0.5, 
+    point.padding = 0.5,
+    segment.color = "grey50",
+    min.segment.length = 0.1,
+    seed = 2023,
+    direction = "both",
+    nudge_x = 0.15,
+    show.legend = FALSE
+  ) +
+  
+  # 4. 颜色方案
+  scale_color_manual(
+    name = "Legend",
+    values = c(
+      "Author Path" = "#6A5ACD",  # 靛蓝色路径
+      "Time Node" = "black"       # 节点轮廓
+    )
+  ) +
+  scale_fill_brewer(
+    name = "Time Period", 
+    palette = "Set2",  # 柔和填充色
+    guide = guide_legend(override.aes = list(shape = 21, size = 4))
+  ) +
+  
+  # 5. 图表标题和标签
+  labs(
+    x = "Research Period", 
+    y = NULL,
+    title = "Research Topic Evolution of Core Authors",
+    subtitle = "Top 2 Keywords per Period (Authors Ranked by Publication Count)",
+    caption = "Data Source: Web of Science Database"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    # 坐标轴优化
+    axis.text.x = element_text(angle = 30, hjust = 1, size = 10, face = "bold"),
+    axis.text.y = element_text(size = 11, face = "bold"),
+    
+    # 标题优化
+    plot.title = element_text(
+      size = 16, 
+      face = "bold",
+      hjust = 0.5,
+      margin = margin(b = 10)
+    ),
+    plot.subtitle = element_text(
+      size = 12, 
+      hjust = 0.5,
+      margin = margin(b = 15)
+    ),
+    
+    # 网格线优化
+    panel.grid.major = element_line(linetype = "dotted", color = "grey90"),
+    panel.grid.minor = element_blank(),
+    
+    # 图例优化
+    legend.position = "top",
+    legend.box = "horizontal",
+    legend.title = element_text(face = "bold"),
+    
+    # 背景
+    plot.background = element_rect(fill = "white", color = NA),
+    panel.background = element_rect(fill = "white", color = NA),
+    
+    # 边距
+    plot.margin = margin(15, 20, 15, 20)
+  ) +
+  
+  # 6. 垂直参考线
+  geom_vline(
+    xintercept = unique(author_keywords$period),
+    color = "grey90",
+    linetype = "dotted",
+    alpha = 0.5
+  )
+
+
+###################
+# 1. 计算作者发文量分布
+author_prod <- WOS_clean %>%
+  # 拆分所有作者
+  mutate(AU = str_replace_all(AU, ";\\s*", ";")) %>%
+  separate_rows(AU, sep = ";") %>%
+  mutate(AU = str_trim(toupper(AU))) %>%
+  # 过滤无效作者
+  filter(!is.na(AU), AU != "", AU != "ANONYMOUS") %>%
+  # 统计作者发文量
+  count(AU, name = "publications") %>%
+  # 过滤高产作者（仅分析有发文的作者）
+  filter(publications > 0)
+
+# 2. 计算洛特卡分布参数
+# 统计发文量大于k的作者数
+lotka_data <- author_prod %>%
+  group_by(publications) %>%
+  summarise(author_count = n(), .groups = "drop") %>%
+  # 计算累计作者比例
+  arrange(desc(publications)) %>%
+  mutate(
+    cumulative_authors = cumsum(author_count),
+    prop_authors = author_count / max(cumulative_authors),
+    log_publications = log10(publications),
+    log_authors = log10(author_count)
+  )
+
+# 3. 洛特卡回归分析
+# 选择合适的数据范围（排除极低频数据）
+lotka_reg_data <- lotka_data %>%
+  filter(author_count > 1)
+
+# 拟合模型 y = c * x^(-b)
+lotka_model <- lm(log_authors ~ log_publications, data = lotka_reg_data)
+b <- -coef(lotka_model)[2]  # 洛特卡指数
+c_value <- 10^(coef(lotka_model)[1])  # 比例常数
+
+# 打印洛特卡定律参数
+cat("洛特卡定律参数：\n")
+cat(sprintf("指数 b = %.4f\n", b))
+cat(sprintf("比例常数 c = %.4f\n", c_value))
+
+# 4. 理论洛特卡曲线预测
+prediction <- data.frame(
+  publications = seq(min(lotka_data$publications), max(lotka_data$publications), by = 1)
+) %>%
+  mutate(
+    log_publications = log10(publications),
+    log_pred = predict(lotka_model, newdata = data.frame(log_publications)),
+    pred_authors = 10^(log_pred),
+    lotka_expected = c_value * publications^(-b)  # 理论值
+  )
+
+# 5. 洛特卡定律可视化
+library(ggplot2)
+
+ggplot() +
+  # 实际分布点
+  geom_point(data = lotka_data, 
+             aes(x = publications, y = author_count),
+             color = "blue", size = 3) +
+  # 理论曲线
+  geom_line(data = prediction,
+            aes(x = publications, y = lotka_expected),
+            color = "red", linewidth = 1) +
+  # 回归线
+  geom_smooth(data = lotka_data,
+              aes(x = publications, y = author_count),
+              method = "lm", se = FALSE, linetype = "dashed", color = "darkgreen") +
+  # 刻度设置
+  scale_x_log10(breaks = scales::trans_breaks("log10", function(x) 10^x),
+                labels = scales::trans_format("log10", scales::math_format(10^.x))) +
+  scale_y_log10(breaks = scales::trans_breaks("log10", function(x) 10^x),
+                labels = scales::trans_format("log10", scales::math_format(10^.x))) +
+  # 标签与注释
+  labs(
+    x = "发文量（篇）",
+    y = "作者数量（人）",
+    title = sprintf("洛特卡定律分析 (b=%.3f)", b),
+    caption = "红曲线：理论洛特卡分布\n绿虚线：回归拟合线"
+  ) +
+  annotation_logticks() +  # 对数刻度标记
+  geom_text(aes(x = median(prediction$publications), y = max(lotka_data$author_count)*0.3,
+                label = sprintf("洛特卡指数 b = %.3f", b)), 
+            size = 5, fontface = "bold") +
+  theme_minimal() +
+  theme(
+    axis.text = element_text(size = 10),
+    title = element_text(size = 12, face = "bold")
+  )
+
+# 6. 洛特卡定律拟合评估
+rsquared <- summary(lotka_model)$r.squared
+cat(sprintf("\n拟合优度 R² = %.4f\n", rsquared))
+
+# 7. 洛特卡定律解释
+cat("\n洛特卡定律解读：\n")
+if (b < 1.9) {
+  cat("-> 领域存在大量低产作者\n")
+} else if (b > 2.1) {
+  cat("-> 少数高产作者主导领域研究\n")
+} else {
+  cat("-> 作者生产力分布接近经典洛特卡定律(指数≈2)\n")
+}
+
+
